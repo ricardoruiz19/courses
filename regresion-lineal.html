@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Regresión Lineal & Modelo en Python</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════
+   RESET & BASE  (idéntico al sitio de referencia)
+══════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --teal:        #00A99D;
+  --teal-dark:   #007f75;
+  --teal-light:  rgba(0,169,157,.12);
+  --red:         #e74c3c;
+  --orange:      #f39c12;
+  --blue:        #3498db;
+  --green:       #27ae60;
+  --bg:          #0d1117;
+  --bg2:         #161b22;
+  --bg3:         #21262d;
+  --border:      #30363d;
+  --text:        #c9d1d9;
+  --text-muted:  #8b949e;
+  --text-head:   #f0f6fc;
+  --code-bg:     #161b22;
+  --font:        'Inter', system-ui, sans-serif;
+  --mono:        'JetBrains Mono', 'Fira Code', monospace;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+/* ── SCROLL BAR ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ══════════════════════════════════════════
+   HERO  (igual al sitio de referencia)
+══════════════════════════════════════════ */
+.hero {
+  background: linear-gradient(160deg, #0d1117 0%, #0d2137 55%, #0a1a2e 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 56px 24px 44px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 20% 60%, rgba(0,169,157,.07) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 40% at 80% 30%, rgba(52,152,219,.05) 0%, transparent 70%);
+  pointer-events: none;
+}
+.unit-badge {
+  display: inline-block;
+  background: var(--teal);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  padding: 4px 16px;
+  border-radius: 20px;
+  margin-bottom: 18px;
+}
+.hero h1 {
+  font-size: clamp(1.7rem, 4vw, 2.8rem);
+  font-weight: 900;
+  color: var(--text-head);
+  line-height: 1.15;
+  margin-bottom: 14px;
+}
+.hero h1 span { color: var(--teal); }
+.hero .subtitle {
+  color: var(--text-muted);
+  font-size: 1rem;
+  max-width: 620px;
+  margin: 0 auto 36px;
+}
+.stats-row {
+  display: flex; justify-content: center; gap: 48px; flex-wrap: wrap;
+}
+.stat .num  { font-size: 1.9rem; font-weight: 900; color: var(--teal); line-height: 1; }
+.stat .lbl  { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; margin-top: 4px; }
+
+/* ══════════════════════════════════════════
+   LAYOUT  — sticky sidebar + main
+══════════════════════════════════════════ */
+.page {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  position: sticky; top: 0;
+  height: 100vh; overflow-y: auto;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  padding: 20px 0;
+}
+.sb-title {
+  padding: 0 18px 10px;
+  font-size: 10px; font-weight: 700;
+  color: var(--teal); letter-spacing: 2px; text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 6px;
+}
+.sidebar a {
+  display: block;
+  padding: 8px 18px;
+  font-size: 12.5px; color: var(--text-muted);
+  text-decoration: none;
+  border-left: 3px solid transparent;
+  transition: all .18s;
+}
+.sidebar a:hover, .sidebar a.active {
+  color: var(--teal);
+  background: rgba(0,169,157,.07);
+  border-left-color: var(--teal);
+}
+.sidebar a.group {
+  font-size: 11px; font-weight: 700; color: #555e6b;
+  text-transform: uppercase; letter-spacing: 1px;
+  pointer-events: none; margin-top: 10px;
+}
+
+/* ── MAIN ── */
+main {
+  padding: 52px 44px;
+  min-width: 0;
+}
+
+/* ══════════════════════════════════════════
+   SECTION HEADERS
+══════════════════════════════════════════ */
+.section { margin-bottom: 88px; scroll-margin-top: 24px; }
+
+.section-tag {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 6px;
+}
+.s-num {
+  background: var(--teal); color: #fff;
+  width: 34px; height: 34px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 13px; flex-shrink: 0;
+}
+.s-meta { font-size: 10.5px; color: var(--teal); font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
+
+h2 {
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+  font-weight: 800; color: var(--text-head);
+  line-height: 1.2; margin: 6px 0 4px;
+}
+.section-lead { color: var(--text-muted); font-size: .9rem; margin-bottom: 32px; font-style: italic; }
+
+h3 {
+  font-size: 1.05rem; font-weight: 700; color: var(--teal);
+  margin: 32px 0 10px;
+}
+h4 { font-size: .9rem; font-weight: 700; color: var(--text-head); margin-bottom: 6px; }
+p  { color: var(--text); margin-bottom: 14px; }
+
+hr.div { border: none; border-top: 1px solid var(--border); margin: 60px 0; }
+
+/* ══════════════════════════════════════════
+   CARDS GRID
+══════════════════════════════════════════ */
+.cards {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(190px,1fr));
+  gap: 14px; margin: 18px 0;
+}
+.card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 18px 16px;
+  transition: border-color .2s, transform .2s;
+}
+.card:hover { border-color: var(--teal); transform: translateY(-2px); }
+.card .ci  { font-size: 1.5rem; margin-bottom: 10px; }
+.card h4   { font-size: .82rem; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+.card p    { font-size: 12.5px; margin: 0; color: var(--text-muted); }
+.card.hi   { border-color: rgba(0,169,157,.35); }
+.card.hi h4 { color: var(--teal); }
+
+/* ══════════════════════════════════════════
+   CALLOUTS  (tip / warn / info / ok)
+══════════════════════════════════════════ */
+.callout {
+  display: flex; gap: 14px; align-items: flex-start;
+  border-radius: 10px; padding: 16px 18px; margin: 22px 0;
+}
+.callout .ci { font-size: 1.25rem; margin-top: 1px; flex-shrink: 0; }
+.callout p   { font-size: 13px; margin: 0; }
+.callout h4  { font-size: .8rem; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; margin-bottom: 4px; }
+.tip  { background: rgba(0,169,157,.1);  border: 1px solid rgba(0,169,157,.3);  }
+.tip  .ci, .tip  h4 { color: var(--teal); }
+.warn { background: rgba(231,76,60,.09); border: 1px solid rgba(231,76,60,.3);  }
+.warn .ci, .warn h4 { color: var(--red); }
+.info { background: rgba(243,156,18,.09);border: 1px solid rgba(243,156,18,.28);}
+.info .ci, .info h4 { color: var(--orange); }
+.ok   { background: rgba(39,174,96,.09); border: 1px solid rgba(39,174,96,.3);  }
+.ok   .ci, .ok   h4 { color: var(--green); }
+
+/* ══════════════════════════════════════════
+   FORMULA DISPLAY
+══════════════════════════════════════════ */
+.formula {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-left: 4px solid var(--teal);
+  border-radius: 8px; padding: 20px 24px;
+  text-align: center; margin: 20px 0;
+  font-size: 1.2rem; color: var(--text-head);
+  font-family: var(--mono); letter-spacing: .5px;
+}
+.formula-parts {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr));
+  gap: 12px; margin: 16px 0;
+}
+.fp {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 8px; padding: 14px 16px;
+}
+.fp .sym { font-family: var(--mono); font-size: 1rem; color: var(--teal); font-weight: 700; margin-bottom: 6px; }
+.fp p    { font-size: 12.5px; margin: 0; color: var(--text-muted); }
+
+/* ══════════════════════════════════════════
+   CODE BLOCKS
+══════════════════════════════════════════ */
+.code-block { background: var(--code-bg); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin: 20px 0; }
+.cb-head {
+  background: #0d1117; padding: 9px 16px;
+  display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid var(--border);
+}
+.cb-head span { font-size: 11.5px; color: var(--text-muted); font-family: var(--mono); }
+.cp {
+  background: var(--bg3); border: none; color: var(--text-muted);
+  padding: 4px 12px; border-radius: 5px; cursor: pointer;
+  font-size: 11px; font-family: var(--font); transition: all .2s;
+}
+.cp:hover { background: var(--teal); color: #fff; }
+pre { padding: 20px; overflow-x: auto; font-size: 12.5px; line-height: 1.65; font-family: var(--mono); }
+pre code { color: #c9d1d9; }
+
+/* syntax */
+.kw  { color: #ff7b72; }   /* keywords */
+.fn  { color: #79c0ff; }   /* functions */
+.str { color: #a5d6a7; }   /* strings */
+.cm  { color: #8b949e; font-style: italic; }  /* comments */
+.nm  { color: #ffa657; }   /* numbers */
+.op  { color: #79c0ff; }   /* operators */
+.cl  { color: #ffa657; }   /* class names */
+
+.output {
+  background: #010409; border: 1px solid var(--border);
+  border-radius: 8px; padding: 16px 20px; margin: 10px 0;
+  font-family: var(--mono); font-size: 12.5px; color: #56d364;
+}
+.output .lbl { font-size: 10px; color: #555e6b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; font-family: var(--font); }
+
+/* ══════════════════════════════════════════
+   TABLES
+══════════════════════════════════════════ */
+.tw { overflow-x: auto; margin: 18px 0; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { background: var(--bg3); color: var(--teal); padding: 10px 14px; text-align: left; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; }
+td { padding: 10px 14px; border-bottom: 1px solid var(--border); color: var(--text-muted); }
+tr:hover td { background: rgba(0,169,157,.04); }
+code { background: var(--bg3); padding: 2px 6px; border-radius: 4px; font-family: var(--mono); font-size: 12px; color: #ffa657; }
+
+/* ══════════════════════════════════════════
+   SIMULATORS
+══════════════════════════════════════════ */
+.sim {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 12px; padding: 26px; margin: 26px 0;
+}
+.sim h3 { margin-top: 0; }
+.sim-row { display: flex; flex-wrap: wrap; gap: 18px; margin: 18px 0; }
+.sim-ctrl { flex: 1; min-width: 180px; }
+.sim-ctrl label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; font-weight: 600; }
+.sim-ctrl .val { color: var(--teal); font-weight: 700; float: right; }
+input[type=range] { width: 100%; accent-color: var(--teal); cursor: pointer; }
+.sim-btn {
+  background: var(--teal); border: none; color: #fff;
+  padding: 10px 22px; border-radius: 8px; cursor: pointer;
+  font-weight: 700; font-size: 13px; font-family: var(--font);
+  transition: background .2s; margin-right: 8px; margin-top: 6px;
+}
+.sim-btn:hover { background: var(--teal-dark); }
+.sim-btn.sec {
+  background: transparent; border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+.sim-btn.sec:hover { border-color: var(--teal); color: var(--teal); background: transparent; }
+canvas { display: block; width: 100%; border-radius: 8px; background: #010409; margin-top: 14px; }
+
+.metrics { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0; }
+.metric {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 8px; padding: 12px 18px; text-align: center; flex: 1; min-width: 100px;
+}
+.metric .mv { font-size: 1.35rem; font-weight: 800; color: var(--teal); }
+.metric .ml { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+
+/* challenge sliders */
+.challenge-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 16px; }
+@media(max-width:620px){ .challenge-wrap { grid-template-columns: 1fr; } }
+.eq-display {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 8px; padding: 14px; text-align: center;
+  font-family: var(--mono); font-size: .9rem; color: var(--text-head); margin: 10px 0;
+}
+.ols-solution {
+  background: rgba(0,169,157,.08); border: 1px solid rgba(0,169,157,.25);
+  border-radius: 8px; padding: 14px 18px; margin-top: 10px; display: none;
+}
+.ols-solution h4 { color: var(--teal); margin-bottom: 6px; font-size: .85rem; }
+
+/* ══════════════════════════════════════════
+   TRIVIA
+══════════════════════════════════════════ */
+.trivia {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 12px; padding: 26px; margin: 28px 0;
+}
+.trivia-prog { font-size: 11.5px; color: var(--text-muted); margin-bottom: 14px; }
+.q-text { font-size: .95rem; color: var(--text-head); margin-bottom: 16px; font-weight: 500; }
+.opts { display: flex; flex-direction: column; gap: 8px; }
+.opt {
+  background: var(--bg3); border: 1px solid var(--border);
+  color: var(--text); padding: 11px 16px; border-radius: 8px;
+  cursor: pointer; text-align: left; font-size: 13px;
+  font-family: var(--font); transition: all .18s;
+}
+.opt:hover { border-color: var(--teal); color: var(--teal); }
+.opt.correct { border-color: var(--teal); background: rgba(0,169,157,.14); color: var(--teal); }
+.opt.wrong   { border-color: var(--red);  background: rgba(231,76,60,.12); color: var(--red); }
+.fb { margin-top: 12px; padding: 10px 14px; border-radius: 8px; font-size: 13px; display: none; }
+.fb.show { display: block; }
+.fb.ok  { background: rgba(0,169,157,.12); color: var(--teal); }
+.fb.err { background: rgba(231,76,60,.1);  color: #ff7b72; }
+.next-btn {
+  display: inline-block; margin-top: 14px;
+  background: transparent; border: 1px solid var(--teal);
+  color: var(--teal); padding: 8px 20px; border-radius: 8px;
+  cursor: pointer; font-size: 13px; font-weight: 700;
+  font-family: var(--font); transition: all .18s;
+}
+.next-btn:hover { background: var(--teal); color: #fff; }
+.score-wrap { text-align: center; padding: 20px 10px; }
+.score-big { font-size: 3rem; font-weight: 900; color: var(--teal); }
+.score-sub { color: var(--text-muted); font-size: .9rem; margin-top: 8px; }
+
+/* ══════════════════════════════════════════
+   ACTIVIDAD PRÁCTICA — Notebook download
+══════════════════════════════════════════ */
+.notebook-card {
+  background: linear-gradient(135deg, var(--bg2) 0%, rgba(0,169,157,.06) 100%);
+  border: 1px solid rgba(0,169,157,.35);
+  border-radius: 14px; padding: 32px; margin: 28px 0;
+  display: flex; gap: 24px; align-items: flex-start; flex-wrap: wrap;
+}
+.nb-icon { font-size: 3rem; flex-shrink: 0; line-height: 1; }
+.nb-body { flex: 1; min-width: 220px; }
+.nb-body h4 { font-size: 1.1rem; color: var(--text-head); margin-bottom: 8px; }
+.nb-body p  { font-size: 13.5px; margin-bottom: 14px; }
+.dl-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--teal); color: #fff;
+  padding: 12px 24px; border-radius: 9px; text-decoration: none;
+  font-weight: 700; font-size: 14px; font-family: var(--font);
+  transition: background .2s; border: none; cursor: pointer;
+}
+.dl-btn:hover { background: var(--teal-dark); }
+.dl-btn svg { width: 18px; height: 18px; fill: currentColor; flex-shrink: 0; }
+
+.steps-list { counter-reset: step; list-style: none; padding: 0; margin: 18px 0; }
+.steps-list li {
+  counter-increment: step;
+  padding: 10px 14px 10px 50px;
+  position: relative;
+  border-left: 2px solid var(--border);
+  margin-left: 18px; margin-bottom: 2px;
+  font-size: 13.5px; color: var(--text);
+}
+.steps-list li::before {
+  content: counter(step);
+  position: absolute; left: -17px; top: 8px;
+  background: var(--teal); color: #fff;
+  width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 13px;
+}
+
+/* ══════════════════════════════════════════
+   VIDEO EMBED placeholder
+══════════════════════════════════════════ */
+.video-wrap {
+  border: 1px solid var(--border); border-radius: 10px;
+  overflow: hidden; margin: 20px 0; aspect-ratio: 16/9;
+  background: var(--bg2); position: relative;
+}
+.video-wrap iframe { width: 100%; height: 100%; border: none; }
+
+/* ══════════════════════════════════════════
+   FOOTER
+══════════════════════════════════════════ */
+footer {
+  background: var(--bg2); border-top: 1px solid var(--border);
+  padding: 20px 44px; font-size: 12px; color: var(--text-muted); text-align: center;
+}
+
+/* ══════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════ */
+@media(max-width:768px){
+  .page { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+  main { padding: 28px 18px; }
+  .hero { padding: 40px 18px 32px; }
+  .stats-row { gap: 28px; }
+  h2 { font-size: 1.4rem; }
+  .notebook-card { flex-direction: column; }
+}
+
+/* fade-in */
+@keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+.section { animation: fadeUp .5s ease both; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════ HERO ═══════════ -->
+<div class="hero">
+  <div class="unit-badge">UNIDAD 3 · TEMA 1 & 2</div>
+  <h1>Regresión Lineal <span>&</span> Modelo en Python</h1>
+  <p class="subtitle">De la teoría de Mínimos Cuadrados a la implementación práctica con sklearn. Construye tu primer modelo predictivo y amplíalo con regresión múltiple.</p>
+  <div class="stats-row">
+    <div class="stat"><div class="num">3</div><div class="lbl">Temas</div></div>
+    <div class="stat"><div class="num">2</div><div class="lbl">Simuladores</div></div>
+    <div class="stat"><div class="num">1</div><div class="lbl">Trivia</div></div>
+    <div class="stat"><div class="num">10K</div><div class="lbl">Observaciones</div></div>
+  </div>
+</div>
+
+<!-- ═══════════ PAGE LAYOUT ═══════════ -->
+<div class="page">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sb-title">Contenido</div>
+    <a href="#s13" class="group">Tema 1 · Regresión</a>
+    <a href="#s13">1.3 Regresión Lineal & OLS</a>
+    <a href="#s14" class="group">Tema 1 · Python</a>
+    <a href="#s14">1.4 Modelo en Python</a>
+    <a href="#s21" class="group">Tema 2 · Múltiple</a>
+    <a href="#s21">2.1 Regresión Múltiple</a>
+    <a href="#actividad" class="group">Actividad</a>
+    <a href="#actividad">Taller_Regresion.ipynb</a>
+  </nav>
+
+  <!-- MAIN -->
+  <main>
+
+    <!-- ══════════════════════════════════════
+         1.3  REGRESIÓN LINEAL SIMPLE & OLS
+    ══════════════════════════════════════ -->
+    <section class="section" id="s13">
+      <div class="section-tag">
+        <div class="s-num">03</div>
+        <div class="s-meta">TEMA 1 · REGRESIÓN</div>
+      </div>
+      <h2>Regresión Lineal Simple &amp; Mínimos Cuadrados (OLS)</h2>
+      <p class="section-lead">Nuestro primer modelo predictivo: una línea recta que traza el futuro.</p>
+
+      <p>Un <strong>modelo predictivo</strong> es, en esencia, un <strong>mapa simplificado de la realidad</strong>. No es el territorio real (que es infinitamente complejo), pero si el mapa es bueno, nos ayuda a navegar y a predecir qué encontraremos más adelante. Pasamos de describir el pasado <strong>(analítica descriptiva)</strong> a predecir el futuro <strong>(analítica predictiva)</strong>.</p>
+
+      <!-- VIDEO 1 -->
+      <h3>🎬 Video: ¿Qué es un Modelo? | DotCSV</h3>
+      <p>Antes de construir nuestro primer modelo, es fundamental entender <strong>qué es un modelo</strong> y por qué es tan poderoso. Este video explica cómo los modelos simplifican la realidad, el equilibrio entre precisión y simplicidad, y los tres pilares del Machine Learning: <strong>datos, parámetros y error</strong>.</p>
+      <div class="video-wrap">
+        <iframe src="https://www.youtube.com/embed/Sb8XVheowVQ" title="¿Qué es un Modelo? DotCSV" allowfullscreen loading="lazy"></iframe>
+      </div>
+
+      <!-- VARIABLES -->
+      <div class="cards">
+        <div class="card hi">
+          <div class="ci">🎯</div>
+          <h4>Variable Dependiente (Y)</h4>
+          <p>Lo que queremos predecir. Es nuestro <strong>objetivo</strong>. En nuestro caso: <code>monto_prestamo</code>.</p>
+        </div>
+        <div class="card">
+          <div class="ci">📥</div>
+          <h4>Variable Independiente (X)</h4>
+          <p>Lo que usamos como "pista" para predecir Y. Nuestro <strong>predictor</strong>: <code>ingresos_anuales</code>.</p>
+        </div>
+      </div>
+
+      <!-- ECUACIÓN -->
+      <h3>La Ecuación del Modelo</h3>
+      <div class="formula">y = β₀ + β₁ · x + ε</div>
+      <div class="formula-parts">
+        <div class="fp">
+          <div class="sym">β₀ (Intercepto)</div>
+          <p>El "punto de partida". Valor estimado de Y cuando X es cero. Posiciona la línea correctamente en el espacio.</p>
+        </div>
+        <div class="fp">
+          <div class="sym">β₁ (Pendiente)</div>
+          <p>El corazón del modelo. Nos dice <strong>cuánto cambia Y por cada unidad de aumento en X</strong>. Es el "efecto" cuantificado.</p>
+        </div>
+        <div class="fp">
+          <div class="sym">ε (Error / Residuo)</div>
+          <p>Representa todo lo que el modelo no puede capturar: aleatoriedad, errores de medición y variables omitidas.</p>
+        </div>
+      </div>
+
+      <!-- VIDEO 2 -->
+      <h3>🎬 Video: Regresión Lineal y Mínimos Cuadrados Ordinarios | DotCSV</h3>
+      <div class="video-wrap">
+        <iframe src="https://www.youtube.com/embed/k964_uNn3l0" title="Regresión Lineal OLS DotCSV" allowfullscreen loading="lazy"></iframe>
+      </div>
+
+      <!-- OLS -->
+      <h3>Mínimos Cuadrados Ordinarios (OLS)</h3>
+      <p>En un diagrama de dispersión, podríamos dibujar infinitas líneas rectas. OLS encuentra la línea que hace que la <strong>suma de las distancias al cuadrado</strong> (los residuos²) sea lo más pequeña posible.</p>
+
+      <div class="callout tip">
+        <div class="ci">💡</div>
+        <div>
+          <h4>Analogía de los Resortes</h4>
+          <p>Imagina que cada punto de dato está conectado a la línea por un resorte vertical. OLS elige la línea que minimiza la <strong>energía total de los resortes</strong> (la suma de los cuadrados de sus longitudes). Se elevan al cuadrado para que errores positivos y negativos no se cancelen y para penalizar más los errores grandes.</p>
+        </div>
+      </div>
+
+      <!-- SIMULADOR OLS -->
+      <div class="sim">
+        <h3>📊 Simulador: Mínimos Cuadrados Ordinarios (OLS)</h3>
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">Genera datos, mira la línea de mejor ajuste y los residuos al cuadrado en tiempo real.</p>
+        <div class="sim-row">
+          <div class="sim-ctrl">
+            <label>Ruido (dispersión) <span class="val" id="noiseVal">30</span></label>
+            <input type="range" id="noiseSlider" min="5" max="80" value="30"
+              oninput="document.getElementById('noiseVal').textContent=this.value">
+          </div>
+          <div class="sim-ctrl">
+            <label>Puntos <span class="val" id="ptsVal">40</span></label>
+            <input type="range" id="ptsSlider" min="15" max="100" value="40"
+              oninput="document.getElementById('ptsVal').textContent=this.value">
+          </div>
+        </div>
+        <button class="sim-btn" onclick="runOLS()">Generar & Ajustar 📈</button>
+        <button class="sim-btn sec" id="residBtn" onclick="toggleResid()" style="display:none">Mostrar residuos 🔻</button>
+        <canvas id="olsCanvas" height="320"></canvas>
+        <div class="metrics" id="olsMetrics" style="display:none">
+          <div class="metric"><div class="mv" id="m_b0">—</div><div class="ml">β₀ Intercepto</div></div>
+          <div class="metric"><div class="mv" id="m_b1">—</div><div class="ml">β₁ Pendiente</div></div>
+          <div class="metric"><div class="mv" id="m_sse">—</div><div class="ml">SSE (Σresid²)</div></div>
+          <div class="metric"><div class="mv" id="m_r2ols">—</div><div class="ml">R²</div></div>
+        </div>
+      </div>
+
+      <!-- DESAFÍO -->
+      <div class="sim">
+        <h3>🎮 Desafío: ¿Puedes encontrar la mejor línea?</h3>
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">Ajusta manualmente β₀ (intercepto) y β₁ (pendiente). Los cuadrados rosados muestran el error de cada punto. Tu meta: <strong>minimizar el MSE</strong>.</p>
+        <button class="sim-btn sec" onclick="newChallenge()">Nuevos Datos 🎲</button>
+        <canvas id="chalCanvas" height="300"></canvas>
+        <div class="challenge-wrap">
+          <div>
+            <div class="sim-ctrl">
+              <label>Intercepto β₀ <span class="val" id="b0Val">1.50</span></label>
+              <input type="range" id="b0Sl" min="-5" max="10" step="0.1" value="1.5" oninput="updateChallenge()">
+            </div>
+            <div class="sim-ctrl" style="margin-top:12px">
+              <label>Pendiente β₁ <span class="val" id="b1Val">0.60</span></label>
+              <input type="range" id="b1Sl" min="-3" max="5" step="0.05" value="0.6" oninput="updateChallenge()">
+            </div>
+            <div class="eq-display" id="chalEq">ŷ = 1.50 + 0.60 · x</div>
+          </div>
+          <div>
+            <div class="metrics">
+              <div class="metric"><div class="mv" id="c_mse">—</div><div class="ml">Tu MSE</div></div>
+              <div class="metric"><div class="mv" id="c_r2">—</div><div class="ml">Tu R²</div></div>
+            </div>
+            <button class="sim-btn" onclick="showOLSSol()" style="margin-top:8px;width:100%">Mostrar solución OLS 💡</button>
+            <div class="ols-solution" id="olsSol">
+              <h4>Solución Óptima (OLS)</h4>
+              <div class="eq-display" id="solEq" style="margin:8px 0">ŷ = — + — · x</div>
+              <span id="solMetrics" style="font-size:12px;color:var(--text-muted)">MSE = — | R² = —</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TRIVIA 1.3 -->
+      <div class="trivia" id="trivia13">
+        <h3 style="margin-top:0">📝 Mini-Trivia: Regresión Lineal & OLS</h3>
+        <div class="trivia-prog" id="tp13">0 / 3</div>
+        <div class="q-text" id="qt13"></div>
+        <div class="opts" id="qo13"></div>
+        <div class="fb" id="qf13"></div>
+        <button class="next-btn" id="nb13" onclick="nextQ(13)" style="display:none">Siguiente →</button>
+        <div class="score-wrap" id="sc13" style="display:none">
+          <div class="score-big" id="sb13">0/3</div>
+          <div class="score-sub">¡Trivia completada! Revisa los conceptos donde fallaste.</div>
+          <button class="next-btn" onclick="restartTrivia(13)" style="margin-top:10px">🔄 Reiniciar</button>
+        </div>
+      </div>
+    </section>
+
+    <hr class="div">
+
+    <!-- ══════════════════════════════════════
+         1.4  MODELO EN PYTHON
+    ══════════════════════════════════════ -->
+    <section class="section" id="s14">
+      <div class="section-tag">
+        <div class="s-num">04</div>
+        <div class="s-meta">TEMA 1 · PYTHON</div>
+      </div>
+      <h2>Construcción e Interpretación del Modelo en Python</h2>
+      <p class="section-lead">Pregunta de Negocio: ¿Podemos predecir el <code>monto_prestamo</code> que solicitará un cliente si conocemos sus <code>ingresos_anuales</code>?</p>
+
+      <!-- SKLEARN -->
+      <div class="callout tip">
+        <div class="ci">📦</div>
+        <div>
+          <h4>Scikit-learn: La Navaja Suiza del Machine Learning</h4>
+          <p><strong>Scikit-learn</strong> (<code>sklearn</code>) es la biblioteca de Python más popular para Machine Learning. Cada modelo —regresión, clasificación, clustering— se usa con la <strong>misma interfaz</strong> simple.</p>
+        </div>
+      </div>
+
+      <div class="cards">
+        <div class="card"><div class="ci">📦</div><h4>Regresión</h4><p><code>LinearRegression</code></p></div>
+        <div class="card"><div class="ci">🏹</div><h4>Clasificación</h4><p><code>LogisticRegression</code></p></div>
+        <div class="card"><div class="ci">🌳</div><h4>Ensembles</h4><p><code>RandomForest, XGBoost</code></p></div>
+        <div class="card hi"><div class="ci">📈</div><h4>Métricas</h4><p><code>r2_score, RMSE, F1</code></p></div>
+      </div>
+
+      <!-- PASO 1 -->
+      <h3>Paso 1: Importar las Librerías</h3>
+      <div class="code-block">
+        <div class="cb-head"><span>python — paso_1_imports.py</span><button class="cp" onclick="cp(this)">Copiar</button></div>
+        <pre><code><span class="cm"># --- Librerías fundamentales ---</span>
+<span class="kw">import</span> pandas <span class="kw">as</span> pd
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+<span class="kw">import</span> seaborn <span class="kw">as</span> sns
+
+<span class="cm"># --- Scikit-learn ---</span>
+<span class="kw">from</span> sklearn.linear_model <span class="kw">import</span> LinearRegression
+<span class="kw">from</span> sklearn.model_selection <span class="kw">import</span> train_test_split
+<span class="kw">from</span> sklearn.metrics <span class="kw">import</span> r2_score, mean_squared_error
+
+<span class="cm"># Configuración de gráficos</span>
+plt.style.use(<span class="str">'seaborn-v0_8-whitegrid'</span>)
+plt.rcParams[<span class="str">'figure.figsize'</span>] = (<span class="nm">10</span>, <span class="nm">6</span>)</code></pre>
+      </div>
+
+      <div class="callout info">
+        <div class="ci">📚</div>
+        <div><h4>sklearn viene preinstalado en Colab, Databricks y Kaggle</h4>
+        <p>Solo haz <code>import</code> y listo. Si no está disponible: <code>%pip install scikit-learn</code></p></div>
+      </div>
+
+      <!-- PASO 2-4 -->
+      <h3>Pasos 2–4: Cargar, Explorar y Limpiar</h3>
+      <div class="code-block">
+        <div class="cb-head"><span>python — pasos_2_4.py</span><button class="cp" onclick="cp(this)">Copiar</button></div>
+        <pre><code><span class="cm"># Paso 2: Cargar datos</span>
+df = pd.<span class="fn">read_csv</span>(<span class="str">'credit_risk_data.csv'</span>)
+
+<span class="cm"># Paso 3: Conocer los datos</span>
+<span class="fn">print</span>(<span class="fn">f</span><span class="str">"Dimensiones: {df.shape[0]:,} filas x {df.shape[1]} columnas"</span>)
+<span class="fn">print</span>(df.<span class="fn">describe</span>())
+
+<span class="cm"># Paso 4: Limpieza</span>
+df = df.<span class="fn">dropna</span>()</code></pre>
+      </div>
+
+      <div class="cards">
+        <div class="card hi">
+          <div class="ci">📊</div>
+          <h4>10,000 filas × 8 columnas</h4>
+          <p>edad, antigüedad laboral, ingresos, puntaje de crédito, monto del préstamo, propósito y estado de pago.</p>
+        </div>
+        <div class="card">
+          <div class="ci">⚖️</div>
+          <h4>71.2% Pagado vs 28.8% No Pagado</h4>
+          <p>El dataset está <strong>desbalanceado</strong>. Común en riesgo crediticio.</p>
+        </div>
+      </div>
+
+      <!-- PASO 6: TRAIN TEST -->
+      <h3>Paso 5: Particionar el Dataset — Train / Test Split</h3>
+      <p>Antes de entrenar cualquier modelo, debemos <strong>separar los datos</strong>. Si evaluamos el modelo con los mismos datos que usó para aprender, no sabemos si realmente aprendió o solo memorizó.</p>
+
+      <div class="cards">
+        <div class="card hi">
+          <div class="ci">📖</div>
+          <h4>Datos de Entrenamiento (80%)</h4>
+          <p>El modelo <strong>aprende</strong> con estos datos. Lee los patrones, ajusta los coeficientes y construye su "conocimiento".</p>
+        </div>
+        <div class="card">
+          <div class="ci">📋</div>
+          <h4>Datos de Prueba (20%)</h4>
+          <p>El modelo <strong>se evalúa</strong> con datos que <em>nunca ha visto</em>. Es el examen final: demuestra si aprendió o memorizó.</p>
+        </div>
+      </div>
+
+      <div class="callout tip">
+        <div class="ci">💡</div>
+        <div>
+          <h4>Analogía: Estudiar vs Presentar el Examen</h4>
+          <p>Si un estudiante ve las <strong>mismas preguntas</strong> del examen mientras estudia, sacará 100%. Pero eso no prueba que entendió. Lo mismo pasa con los modelos: la solución es <strong>separar datos que el modelo nunca ve durante el entrenamiento.</strong></p>
+        </div>
+      </div>
+
+      <div class="code-block">
+        <div class="cb-head"><span>python — paso_5_train_test_split.py</span><button class="cp" onclick="cp(this)">Copiar</button></div>
+        <pre><code><span class="cm"># Definir X (predictores) e y (objetivo)</span>
+X = df[[<span class="str">'ingresos_anuales'</span>]]
+y = df[<span class="str">'monto_prestamo'</span>]
+
+<span class="cm"># Separar en 80% entrenamiento y 20% prueba</span>
+X_train, X_test, y_train, y_test = <span class="fn">train_test_split</span>(
+    X, y, test_size=<span class="nm">0.2</span>, random_state=<span class="nm">42</span>
+)
+<span class="fn">print</span>(<span class="fn">f</span><span class="str">"X_train: {X_train.shape}  y_train: {y_train.shape}"</span>)
+<span class="fn">print</span>(<span class="fn">f</span><span class="str">"X_test:  {X_test.shape}   y_test:  {y_test.shape}"</span>)</code></pre>
+      </div>
+      <div class="output">
+        <div class="lbl">output</div>
+        X_train: (8000, 1)  y_train: (8000,)<br>
+        X_test:  (2000, 1)  y_test:  (2000,)
+      </div>
+
+      <!-- PASO 7: MODELO -->
+      <h3>Paso 6: Construir el Modelo de Regresión Simple</h3>
+      <div class="code-block">
+        <div class="cb-head"><span>python — paso_6_regresion_simple.py</span><button class="cp" onclick="cp(this)">Copiar</button></div>
+        <pre><code><span class="cm"># Crear y entrenar SOLO con datos de entrenamiento</span>
+modelo_simple = <span class="cl">LinearRegression</span>()
+modelo_simple.<span class="fn">fit</span>(X_train, y_train)
+
+<span class="cm"># Evaluar en AMBOS conjuntos</span>
+r2_train = modelo_simple.<span class="fn">score</span>(X_train, y_train)
+r2_test  = modelo_simple.<span class="fn">score</span>(X_test,  y_test)
+
+rmse_train = np.<span class="fn">sqrt</span>(<span class="fn">mean_squared_error</span>(y_train, modelo_simple.<span class="fn">predict</span>(X_train)))
+rmse_test  = np.<span class="fn">sqrt</span>(<span class="fn">mean_squared_error</span>(y_test,  modelo_simple.<span class="fn">predict</span>(X_test)))
+
+<span class="fn">print</span>(<span class="str">"========== RESUMEN DEL MODELO =========="</span>)
+<span class="fn">print</span>(<span class="fn">f</span><span class="str">"Intercepto (beta_0): ${modelo_simple.intercept_:>13,.2f} COP"</span>)
+<span class="fn">print</span>(<span class="fn">f</span><span class="str">"Pendiente  (beta_1): {modelo_simple.coef_[0]:>14.4f}"</span>)
+<span class="fn">print</span>(<span class="fn">f</span><span class="str">"R² entrenamiento:    {r2_train:>13.3f}"</span>)
+<span class="fn">print</span>(<span class="fn">f</span><span class="str">"R² prueba:           {r2_test:>13.3f}"</span>)
+<span class="fn">print</span>(<span class="fn">f</span><span class="str">"RMSE prueba:        ${rmse_test:>12,.0f} COP"</span>)</code></pre>
+      </div>
+      <div class="output">
+        <div class="lbl">output</div>
+        ========== RESUMEN DEL MODELO ==========<br>
+        Intercepto (beta_0):  $  -792,724.96 COP<br>
+        Pendiente  (beta_1):          0.4788<br>
+        R² entrenamiento:              0.475<br>
+        R² prueba:                     0.466<br>
+        RMSE prueba:          $ 4,689,585 COP
+      </div>
+
+      <!-- ANÁLISIS -->
+      <div class="cards" style="margin-top:20px">
+        <div class="card hi">
+          <div class="ci">✅</div>
+          <h4>R² train ≈ R² test → Sin overfitting</h4>
+          <p>0.475 vs 0.466: el modelo generaliza bien. No memorizó los datos de entrenamiento.</p>
+        </div>
+        <div class="card">
+          <div class="ci">📏</div>
+          <h4>RMSE test = $4,689,585</h4>
+          <p>Las predicciones se desvían ~$4.7M del valor real. Con préstamos de ~$15M promedio, es un error del ~31%.</p>
+        </div>
+        <div class="card">
+          <div class="ci">📐</div>
+          <h4>β₁ = 0.4788</h4>
+          <p>Por cada peso adicional de ingresos, el préstamo sube ~$0.48 COP. Por cada $1M más de ingreso, el préstamo sube ~$479,000.</p>
+        </div>
+      </div>
+
+      <!-- PREDICCIONES -->
+      <h3>Paso 7: Hacer Predicciones</h3>
+      <div class="code-block">
+        <div class="cb-head"><span>python — paso_7_predicciones.py</span><button class="cp" onclick="cp(this)">Copiar</button></div>
+        <pre><code><span class="cm"># Predecir para un cliente con ingresos de $50,000,000 COP</span>
+prediccion = modelo_simple.<span class="fn">predict</span>([[<span class="nm">50_000_000</span>]])
+<span class="fn">print</span>(<span class="fn">f</span><span class="str">"Para ingresos de $50M → préstamo estimado: ${prediccion[0]:,.0f} COP"</span>)</code></pre>
+      </div>
+      <div class="output">
+        <div class="lbl">output</div>
+        Para ingresos de $50M → préstamo estimado: $23,148,066 COP
+      </div>
+
+      <div class="callout ok">
+        <div class="ci">✅</div>
+        <div>
+          <h4>monto_prestamo = −792,725 + 0.479 · ingresos_anuales + ε</h4>
+          <p>Esta es la ecuación completa de tu primer modelo predictivo. Simple, interpretable y generalizable.</p>
+        </div>
+      </div>
+    </section>
+
+    <hr class="div">
+
+    <!-- ══════════════════════════════════════
+         2.1  REGRESIÓN MÚLTIPLE
+    ══════════════════════════════════════ -->
+    <section class="section" id="s21">
+      <div class="section-tag">
+        <div class="s-num">05</div>
+        <div class="s-meta">TEMA 2 · REGRESIÓN MÚLTIPLE</div>
+      </div>
+      <h2>Regresión Lineal Múltiple</h2>
+      <p class="section-lead">De un GPS con una sola ruta a uno que considera múltiples factores simultáneamente.</p>
+
+      <p>La regresión simple usa una sola variable. Pero la realidad es mucho más compleja. La <strong>regresión lineal múltiple</strong> incluye múltiples variables predictoras, creando un "mapa de la realidad" mucho más rico y preciso.</p>
+
+      <div class="formula">y = β₀ + β₁·x₁ + β₂·x₂ + … + βₖ·xₖ + ε</div>
+
+      <div class="callout info">
+        <div class="ci">📐</div>
+        <div>
+          <h4>Ceteris Paribus: "Manteniendo todo lo demás constante"</h4>
+          <p>En la regresión múltiple, cada β representa el efecto de <em>una</em> variable sobre Y, <strong>manteniendo constantes todas las demás variables del modelo</strong>. Esta es la clave de la interpretación.</p>
+        </div>
+      </div>
+
+      <!-- CASO PRÁCTICO -->
+      <h3>Caso Práctico: Modelando el Monto del Préstamo</h3>
+      <p><strong>Pregunta de Negocio:</strong> ¿Podemos predecir el <code>monto_prestamo</code> a partir de los <code>ingresos_anuales</code>, el <code>puntaje_credito</code>, la <code>edad</code> y la <code>antiguedad_laboral</code>?</p>
+
+      <div class="code-block">
+        <div class="cb-head"><span>python — regresion_multiple.py</span><button class="cp" onclick="cp(this)">Copiar</button></div>
+        <pre><code><span class="cm"># --- 1. Definir variables y particionar ---</span>
+X = df[[<span class="str">'edad'</span>, <span class="str">'antiguedad_laboral'</span>, <span class="str">'ingresos_anuales'</span>, <span class="str">'puntaje_credito'</span>]]
+y = df[<span class="str">'monto_prestamo'</span>]
+
+X_train, X_test, y_train, y_test = <span class="fn">train_test_split</span>(X, y, test_size=<span class="nm">0.2</span>, random_state=<span class="nm">42</span>)
+
+<span class="cm"># --- 2. Entrenar y evaluar ---</span>
+modelo_multiple = <span class="cl">LinearRegression</span>()
+modelo_multiple.<span class="fn">fit</span>(X_train, y_train)
+
+<span class="fn">print</span>(<span class="str">"--- Resultados del Modelo de Regresión Múltiple ---"</span>)
+<span class="fn">print</span>(<span class="fn">f</span><span class="str">"Intercepto: ${modelo_multiple.intercept_:,.2f}"</span>)
+<span class="kw">for</span> nombre, coef <span class="kw">in</span> <span class="fn">zip</span>(X_train.columns, modelo_multiple.coef_):
+    <span class="fn">print</span>(<span class="fn">f</span><span class="str">"  {nombre}: {coef:.4f}"</span>)
+<span class="fn">print</span>(<span class="fn">f</span><span class="str">"\nR² entrenamiento: {modelo_multiple.score(X_train, y_train):.3f}"</span>)
+<span class="fn">print</span>(<span class="fn">f</span><span class="str">"R² prueba:        {modelo_multiple.score(X_test,  y_test):.3f}"</span>)</code></pre>
+      </div>
+
+      <div class="output">
+        <div class="lbl">output</div>
+        --- Resultados del Modelo de Regresión Múltiple ---<br>
+        Intercepto: $-1,400,609.27<br>
+        &nbsp;&nbsp;edad:                  75,611.32<br>
+        &nbsp;&nbsp;antiguedad_laboral:   -28,047.95<br>
+        &nbsp;&nbsp;ingresos_anuales:          0.4287<br>
+        &nbsp;&nbsp;puntaje_credito:        -910.61<br>
+        <br>
+        R² entrenamiento:  0.478<br>
+        R² prueba:         0.467
+      </div>
+
+      <!-- INTERPRETACIÓN -->
+      <h3>Interpretación de Coeficientes</h3>
+
+      <div class="tw">
+        <table>
+          <thead><tr><th>Variable</th><th>Coeficiente</th><th>Interpretación</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><code>ingresos_anuales</code></td>
+              <td><code>0.4287</code></td>
+              <td>Por cada peso adicional de ingreso, el préstamo sube ~$0.43. <em>Predictor más fuerte (r=0.69).</em></td>
+            </tr>
+            <tr>
+              <td><code>edad</code></td>
+              <td><code>75,611</code></td>
+              <td>Cada año adicional de edad aumenta el préstamo en ~$76,000 COP. Personas mayores solicitan préstamos más grandes.</td>
+            </tr>
+            <tr>
+              <td><code>antiguedad_laboral</code></td>
+              <td><code>−28,048</code></td>
+              <td>Coeficiente negativo por <strong>multicolinealidad</strong> con edad (r=0.84). Su efecto ya está capturado.</td>
+            </tr>
+            <tr>
+              <td><code>puntaje_credito</code></td>
+              <td><code>−911</code></td>
+              <td>Efecto leve en el monto. El puntaje importa más para clasificar pagos (regresión logística).</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout ok">
+        <div class="ci">✅</div>
+        <div>
+          <h4>R² train ≈ R² test → No hay overfitting</h4>
+          <p>0.478 vs 0.467: el modelo generaliza bien. El ligero aumento respecto al modelo simple (0.475 → 0.478) indica que agregar edad, antigüedad y puntaje <strong>ayuda poco</strong>: los ingresos ya explican casi todo el monto del préstamo.</p>
+        </div>
+      </div>
+
+      <!-- MULTICOLINEALIDAD -->
+      <h3>⚠️ Multicolinealidad</h3>
+      <p>Ocurre cuando dos o más predictores están altamente correlacionados entre sí. En nuestro caso, <code>edad</code> y <code>antiguedad_laboral</code> tienen r = 0.84. Esto dificulta aislar el efecto individual de cada variable.</p>
+
+      <div class="callout warn">
+        <div class="ci">⚠️</div>
+        <div>
+          <h4>Señales de multicolinealidad</h4>
+          <p>Coeficientes con signo inesperado, alta varianza en los coeficientes al cambiar el dataset, o correlaciones altas (|r| > 0.8) entre predictores. Solución: eliminar una de las variables redundantes o usar Regularización (Ridge, Lasso).</p>
+        </div>
+      </div>
+
+      <!-- COMPARATIVA -->
+      <h3>Comparativa: Regresión Simple vs Múltiple</h3>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Modelo</th><th>Variables</th><th>R² Train</th><th>R² Test</th><th>RMSE Test</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Regresión Simple</td>
+              <td><code>ingresos_anuales</code></td>
+              <td>0.475</td><td>0.466</td><td>$4,689,585</td>
+            </tr>
+            <tr style="background:rgba(0,169,157,.06)">
+              <td><strong>Regresión Múltiple</strong></td>
+              <td><code>ingresos + edad + antigüedad + puntaje</code></td>
+              <td>0.478</td><td>0.467</td><td>$4,682,862</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="font-size:13px;color:var(--text-muted)">La mejora es marginal. Esto nos dice que el conjunto de 4 variables no aporta información sustancialmente nueva respecto a los ingresos solos.</p>
+
+      <!-- SIMULADOR PREDICTOR MÚLTIPLE -->
+      <div class="sim">
+        <h3>🔮 Simulador: Predice con el Modelo Múltiple</h3>
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:18px">Ajusta las variables del cliente y observa cómo cambia la predicción del monto del préstamo.</p>
+        <div class="sim-row">
+          <div class="sim-ctrl">
+            <label>Ingresos Anuales (COP) <span class="val" id="sv_ing">$30,000,000</span></label>
+            <input type="range" id="sl_ing" min="5000000" max="100000000" step="1000000" value="30000000"
+              oninput="updateMultiPred()">
+          </div>
+          <div class="sim-ctrl">
+            <label>Edad <span class="val" id="sv_edad">38 años</span></label>
+            <input type="range" id="sl_edad" min="22" max="65" value="38" oninput="updateMultiPred()">
+          </div>
+        </div>
+        <div class="sim-row">
+          <div class="sim-ctrl">
+            <label>Antigüedad Laboral <span class="val" id="sv_ant">8 años</span></label>
+            <input type="range" id="sl_ant" min="0" max="40" value="8" oninput="updateMultiPred()">
+          </div>
+          <div class="sim-ctrl">
+            <label>Puntaje de Crédito <span class="val" id="sv_ptj">534</span></label>
+            <input type="range" id="sl_ptj" min="300" max="850" value="534" oninput="updateMultiPred()">
+          </div>
+        </div>
+        <div class="metrics">
+          <div class="metric" style="flex:2">
+            <div class="mv" id="pred_out" style="font-size:1.6rem">$14,270,000</div>
+            <div class="ml">Monto Préstamo Estimado (COP)</div>
+          </div>
+          <div class="metric">
+            <div class="mv" id="pred_simple">$13,571,000</div>
+            <div class="ml">Modelo Simple (solo ingresos)</div>
+          </div>
+        </div>
+        <p style="font-size:12px;color:var(--text-muted);margin-top:8px">
+          Ecuación múltiple: ŷ = −1,400,609 + 75,611·edad − 28,048·antigüedad + 0.4287·ingresos − 911·puntaje
+        </p>
+      </div>
+    </section>
+
+    <hr class="div">
+
+    <!-- ══════════════════════════════════════
+         ACTIVIDAD PRÁCTICA
+    ══════════════════════════════════════ -->
+    <section class="section" id="actividad">
+      <div class="section-tag">
+        <div class="s-num">🎓</div>
+        <div class="s-meta">ACTIVIDAD PRÁCTICA</div>
+      </div>
+      <h2>Actividad Práctica: Predice un Nuevo Cliente</h2>
+      <p class="section-lead">Aplica todo lo aprendido en un Notebook interactivo. Tú eliges las variables del cliente y los modelos predicen el monto del préstamo.</p>
+
+      <div class="notebook-card">
+        <div class="nb-icon">📓</div>
+        <div class="nb-body">
+          <h4>Taller_Regresion.ipynb</h4>
+          <p>Descarga este notebook con todo el código de los pasos 1–7 para regresión simple y múltiple. Al final encontrarás una actividad donde <strong>tú eliges las variables</strong> de un cliente nuevo y los modelos predicen el monto del préstamo solicitado.</p>
+          <p>Ábrelo en <strong>Google Colab</strong>, <strong>Databricks</strong> o <strong>Jupyter</strong>. Los datos se cargan directamente desde la URL — no necesitas descargar el CSV.</p>
+          <a class="dl-btn" href="Taller_Regresion.ipynb" download="Taller_Regresion.ipynb">
+            <svg viewBox="0 0 24 24"><path d="M12 16l-6-6h4V4h4v6h4l-6 6zm-8 4h16v-2H4v2z"/></svg>
+            Descargar Taller_Regresion.ipynb
+          </a>
+        </div>
+      </div>
+
+      <h3>¿Qué encontrarás en el notebook?</h3>
+      <ol class="steps-list">
+        <li>Importación de librerías y carga del dataset <code>credit_risk_data.csv</code> desde URL.</li>
+        <li>Análisis exploratorio: correlograma, boxplots y diagrama de dispersión.</li>
+        <li>Train / Test Split y construcción del modelo de <strong>Regresión Lineal Simple</strong>.</li>
+        <li>Evaluación con R², RMSE e interpretación de coeficientes β₀ y β₁.</li>
+        <li>Ampliación al modelo de <strong>Regresión Lineal Múltiple</strong> con 4 variables.</li>
+        <li>Comparativa de métricas: simple vs múltiple.</li>
+        <li><strong>🎯 Actividad final:</strong> ingresa los datos de un cliente nuevo y predice su monto de préstamo con ambos modelos.</li>
+      </ol>
+
+      <div class="callout tip">
+        <div class="ci">☁️</div>
+        <div>
+          <h4>Abre directamente en Google Colab</h4>
+          <p>Haz clic en el botón, sube el archivo <code>.ipynb</code> a Colab o usa <strong>File → Upload notebook</strong>. No necesitas instalar nada — sklearn, pandas y matplotlib ya están disponibles.</p>
+        </div>
+      </div>
+
+      <div class="callout warn">
+        <div class="ci">📌</div>
+        <div>
+          <h4>Instrucciones para la entrega</h4>
+          <p>Ejecuta todas las celdas en orden, completa la actividad final con un cliente de tu elección, añade un bloque de texto con tu análisis de los resultados y sube el notebook ejecutado a la plataforma.</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer>
+  Guía Interactiva · Regresión Lineal & Modelo en Python · Especialización en Inteligencia de Negocios y Big Data · UNAC
+</footer>
+
+<!-- ═══════════════════════════════════════════════
+     JAVASCRIPT
+═══════════════════════════════════════════════ -->
+<script>
+/* ── COPY CODE ── */
+function cp(btn){
+  const pre = btn.closest('.code-block').querySelector('pre');
+  navigator.clipboard.writeText(pre.innerText).then(()=>{
+    btn.textContent='✓ Copiado';
+    setTimeout(()=>btn.textContent='Copiar',2000);
+  });
+}
+
+/* ── ACTIVE NAV ── */
+const secs = document.querySelectorAll('.section');
+const navAs = document.querySelectorAll('.sidebar a:not(.group)');
+window.addEventListener('scroll',()=>{
+  let cur='';
+  secs.forEach(s=>{ if(window.scrollY >= s.offsetTop-100) cur=s.id; });
+  navAs.forEach(a=>{ a.classList.toggle('active', a.getAttribute('href')==='#'+cur); });
+},{passive:true});
+
+/* ══════════════════════════════════════
+   OLS SIMULATOR
+══════════════════════════════════════ */
+let olsData=[], showResid=false;
+
+function rng(seed){ let s=seed; return()=>{ s=(s*1664525+1013904223)&0xffffffff; return(s>>>0)/4294967296; }; }
+
+function generateOLSData(){
+  const noise=+document.getElementById('noiseSlider').value;
+  const n=+document.getElementById('ptsSlider').value;
+  const rand=rng(Date.now()&0xffff);
+  olsData=[];
+  for(let i=0;i<n;i++){
+    const x=rand()*80+10;
+    const y=0.7*x+20+rand()*noise*2-noise;
+    olsData.push({x,y});
+  }
+}
+
+function calcOLS(data){
+  const n=data.length;
+  const mx=data.reduce((s,p)=>s+p.x,0)/n;
+  const my=data.reduce((s,p)=>s+p.y,0)/n;
+  const num=data.reduce((s,p)=>s+(p.x-mx)*(p.y-my),0);
+  const den=data.reduce((s,p)=>s+(p.x-mx)**2,0);
+  const b1=num/den, b0=my-b1*mx;
+  const sse=data.reduce((s,p)=>s+(p.y-(b0+b1*p.x))**2,0);
+  const sst=data.reduce((s,p)=>s+(p.y-my)**2,0);
+  return{b0,b1,sse,r2:1-sse/sst};
+}
+
+function drawOLS(){
+  const cv=document.getElementById('olsCanvas');
+  const ctx=cv.getContext('2d');
+  cv.width=cv.offsetWidth||600; cv.height=320;
+  const W=cv.width, H=cv.height;
+  const pad={t:24,r:24,b:40,l:50};
+  const xs=olsData.map(p=>p.x), ys=olsData.map(p=>p.y);
+  const xmin=Math.min(...xs)-5, xmax=Math.max(...xs)+5;
+  const ymin=Math.min(...ys)-8, ymax=Math.max(...ys)+8;
+  const tx=x=>(x-xmin)/(xmax-xmin)*(W-pad.l-pad.r)+pad.l;
+  const ty=y=>H-pad.b-(y-ymin)/(ymax-ymin)*(H-pad.t-pad.b);
+  const {b0,b1}=calcOLS(olsData);
+
+  ctx.fillStyle='#010409'; ctx.fillRect(0,0,W,H);
+
+  // grid
+  ctx.strokeStyle='#1c2128'; ctx.lineWidth=1;
+  for(let i=0;i<=5;i++){
+    const y=pad.t+i*(H-pad.t-pad.b)/5;
+    ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(W-pad.r,y); ctx.stroke();
+  }
+
+  const {sse}=calcOLS(olsData);
+
+  // residuals
+  if(showResid){
+    olsData.forEach(p=>{
+      const px=tx(p.x), py=ty(p.y), yhat=b0+b1*p.x, pyh=ty(yhat);
+      const s=Math.abs(py-pyh);
+      ctx.fillStyle='rgba(231,76,60,.18)';
+      ctx.fillRect(Math.min(px-s/2,px-s/2),Math.min(py,pyh),s,Math.abs(py-pyh));
+      ctx.strokeStyle='rgba(231,76,60,.4)';
+      ctx.strokeRect(Math.min(px-s/2,px-s/2),Math.min(py,pyh),s,Math.abs(py-pyh));
+    });
+  }
+
+  // regression line
+  ctx.strokeStyle='#e74c3c'; ctx.lineWidth=2.5;
+  ctx.beginPath();
+  ctx.moveTo(tx(xmin), ty(b0+b1*xmin));
+  ctx.lineTo(tx(xmax), ty(b0+b1*xmax));
+  ctx.stroke();
+
+  // points
+  olsData.forEach(p=>{
+    ctx.beginPath();
+    ctx.arc(tx(p.x),ty(p.y),4.5,0,Math.PI*2);
+    ctx.fillStyle='#00A99D'; ctx.globalAlpha=.75; ctx.fill();
+    ctx.globalAlpha=1;
+  });
+
+  // axes labels
+  ctx.fillStyle='#8b949e'; ctx.font='11px Inter,sans-serif';
+  ctx.fillText('X (Predictor)',W/2-30,H-6);
+}
+
+function runOLS(){
+  generateOLSData();
+  showResid=false;
+  drawOLS();
+  const {b0,b1,sse,r2}=calcOLS(olsData);
+  document.getElementById('m_b0').textContent=b0.toFixed(2);
+  document.getElementById('m_b1').textContent=b1.toFixed(3);
+  document.getElementById('m_sse').textContent=sse.toFixed(1);
+  document.getElementById('m_r2ols').textContent=r2.toFixed(3);
+  document.getElementById('olsMetrics').style.display='flex';
+  document.getElementById('residBtn').style.display='inline-block';
+}
+
+function toggleResid(){
+  showResid=!showResid;
+  drawOLS();
+  document.getElementById('residBtn').textContent=showResid?'Ocultar residuos 🔼':'Mostrar residuos 🔻';
+}
+
+/* ── CHALLENGE ── */
+let chalData=[], olsBest={b0:0,b1:0};
+function newChallenge(){
+  const rand=rng(Date.now()&0xffff);
+  chalData=[];
+  for(let i=0;i<30;i++){
+    const x=rand()*8+0.5;
+    const y=1.8*x+0.5+rand()*3-1.5;
+    chalData.push({x,y});
+  }
+  olsBest=calcOLS(chalData);
+  document.getElementById('olsSol').style.display='none';
+  updateChallenge();
+}
+function drawChallenge(b0u,b1u){
+  const cv=document.getElementById('chalCanvas');
+  const ctx=cv.getContext('2d');
+  cv.width=cv.offsetWidth||560; cv.height=300;
+  const W=cv.width,H=cv.height,pad={t:20,r:20,b:36,l:44};
+  if(!chalData.length) return;
+  const xs=chalData.map(p=>p.x), ys=chalData.map(p=>p.y);
+  const xmin=0, xmax=Math.max(...xs)+1;
+  const ymin=Math.min(...ys)-1, ymax=Math.max(...ys)+1;
+  const tx=x=>(x-xmin)/(xmax-xmin)*(W-pad.l-pad.r)+pad.l;
+  const ty=y=>H-pad.b-(y-ymin)/(ymax-ymin)*(H-pad.t-pad.b);
+
+  ctx.fillStyle='#010409'; ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='#1c2128'; ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){
+    const y=pad.t+i*(H-pad.t-pad.b)/4;
+    ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(W-pad.r,y); ctx.stroke();
+  }
+
+  // error squares
+  chalData.forEach(p=>{
+    const px=tx(p.x),py=ty(p.y),yhat=b0u+b1u*p.x,pyh=ty(yhat);
+    const s=Math.abs(py-pyh);
+    ctx.fillStyle='rgba(231,76,60,.15)'; ctx.fillRect(px-s/2,Math.min(py,pyh),s,s);
+    ctx.strokeStyle='rgba(231,76,60,.3)'; ctx.strokeRect(px-s/2,Math.min(py,pyh),s,s);
+  });
+
+  // user line
+  ctx.strokeStyle='#ffa657'; ctx.lineWidth=2.5;
+  ctx.beginPath(); ctx.moveTo(tx(xmin),ty(b0u+b1u*xmin)); ctx.lineTo(tx(xmax),ty(b0u+b1u*xmax)); ctx.stroke();
+
+  // points
+  chalData.forEach(p=>{
+    ctx.beginPath(); ctx.arc(tx(p.x),ty(p.y),4.5,0,Math.PI*2);
+    ctx.fillStyle='#00A99D'; ctx.globalAlpha=.8; ctx.fill(); ctx.globalAlpha=1;
+  });
+}
+function updateChallenge(){
+  const b0=+document.getElementById('b0Sl').value;
+  const b1=+document.getElementById('b1Sl').value;
+  document.getElementById('b0Val').textContent=b0.toFixed(2);
+  document.getElementById('b1Val').textContent=b1.toFixed(2);
+  document.getElementById('chalEq').textContent=`ŷ = ${b0.toFixed(2)} + ${b1.toFixed(2)} · x`;
+  if(!chalData.length){ newChallenge(); return; }
+  const n=chalData.length;
+  const my=chalData.reduce((s,p)=>s+p.y,0)/n;
+  const sse=chalData.reduce((s,p)=>s+(p.y-(b0+b1*p.x))**2,0);
+  const sst=chalData.reduce((s,p)=>s+(p.y-my)**2,0);
+  const mse=sse/n, r2=Math.max(0,1-sse/sst);
+  document.getElementById('c_mse').textContent=mse.toFixed(3);
+  document.getElementById('c_r2').textContent=r2.toFixed(3);
+  drawChallenge(b0,b1);
+}
+function showOLSSol(){
+  const eq=`ŷ = ${olsBest.b0.toFixed(2)} + ${olsBest.b1.toFixed(2)} · x`;
+  const n=chalData.length;
+  const mse=olsBest.sse/n;
+  document.getElementById('solEq').textContent=eq;
+  document.getElementById('solMetrics').textContent=`MSE = ${mse.toFixed(3)} | R² = ${olsBest.r2.toFixed(3)}`;
+  document.getElementById('olsSol').style.display='block';
+}
+
+/* ── MULTI PREDICTOR ── */
+function updateMultiPred(){
+  const ing=+document.getElementById('sl_ing').value;
+  const edad=+document.getElementById('sl_edad').value;
+  const ant=+document.getElementById('sl_ant').value;
+  const ptj=+document.getElementById('sl_ptj').value;
+  document.getElementById('sv_ing').textContent='$'+ing.toLocaleString('es-CO');
+  document.getElementById('sv_edad').textContent=edad+' años';
+  document.getElementById('sv_ant').textContent=ant+' años';
+  document.getElementById('sv_ptj').textContent=ptj;
+  const mult=-1400609+75611*edad-28048*ant+0.4287*ing-911*ptj;
+  const simp=-792725+0.4788*ing;
+  document.getElementById('pred_out').textContent='$'+Math.max(0,Math.round(mult)).toLocaleString('es-CO');
+  document.getElementById('pred_simple').textContent='$'+Math.max(0,Math.round(simp)).toLocaleString('es-CO');
+}
+
+/* ══════════════════════════════════════
+   TRIVIA ENGINE
+══════════════════════════════════════ */
+const TRIVIAS = {
+  13: {
+    qs:[
+      {
+        q:'¿Qué minimiza el método de Mínimos Cuadrados Ordinarios (OLS)?',
+        opts:['La suma de los residuos (sin elevar al cuadrado)','La suma de los residuos al cuadrado (SSE)','La suma de los valores absolutos de los residuos','El valor máximo del residuo'],
+        ans:1,
+        exp:'OLS minimiza la Suma de los Cuadrados de los Errores (SSE = Σεᵢ²). Elevar al cuadrado evita que errores positivos y negativos se cancelen y penaliza más los errores grandes.'
+      },
+      {
+        q:'En la ecuación ŷ = β₀ + β₁·x, ¿qué representa β₁?',
+        opts:['El valor de Y cuando X es cero','El cambio esperado en Y por cada unidad de aumento en X','El error de predicción del modelo','El coeficiente de correlación entre X e Y'],
+        ans:1,
+        exp:'β₁ es la pendiente: indica cuánto cambia en promedio la variable dependiente Y cuando X aumenta en una unidad, manteniendo todo lo demás constante.'
+      },
+      {
+        q:'Si R² train = 0.90 y R² test = 0.42, ¿qué problema tiene el modelo?',
+        opts:['Underfitting: el modelo es demasiado simple','Overfitting: el modelo memorizó los datos de entrenamiento','Los datos tienen demasiado ruido','El modelo es perfecto, no hay ningún problema'],
+        ans:1,
+        exp:'Una brecha grande entre R² train y R² test es la señal clásica de overfitting. El modelo "memorizó" los datos de entrenamiento pero no generaliza a datos nuevos.'
+      }
+    ],
+    cur:0, score:0
+  }
+};
+
+function loadTrivia(id){
+  const t=TRIVIAS[id];
+  if(!t) return;
+  const q=t.qs[t.cur];
+  document.getElementById(`tp${id}`).textContent=`${t.cur+1} / ${t.qs.length}`;
+  document.getElementById(`qt${id}`).textContent=q.q;
+  document.getElementById(`qf${id}`).className='fb';
+  document.getElementById(`qf${id}`).textContent='';
+  document.getElementById(`nb${id}`).style.display='none';
+  document.getElementById(`sc${id}`).style.display='none';
+  const opDiv=document.getElementById(`qo${id}`);
+  opDiv.innerHTML='';
+  q.opts.forEach((o,i)=>{
+    const btn=document.createElement('button');
+    btn.className='opt'; btn.textContent=o;
+    btn.onclick=()=>selectAns(id,i,btn);
+    opDiv.appendChild(btn);
+  });
+}
+let answered={};
+function selectAns(id,i,btn){
+  if(answered[id]) return;
+  answered[id]=true;
+  const t=TRIVIAS[id], q=t.qs[t.cur];
+  document.querySelectorAll(`#qo${id} .opt`)[q.ans].classList.add('correct');
+  const fb=document.getElementById(`qf${id}`);
+  if(i===q.ans){ t.score++; fb.className='fb ok show'; fb.textContent='✓ ¡Correcto! '+q.exp; }
+  else { btn.classList.add('wrong'); fb.className='fb err show'; fb.textContent='✗ Incorrecto. '+q.exp; }
+  document.getElementById(`nb${id}`).style.display='inline-block';
+}
+function nextQ(id){
+  const t=TRIVIAS[id];
+  t.cur++;
+  answered[id]=false;
+  if(t.cur>=t.qs.length){
+    document.getElementById(`qt${id}`).textContent='';
+    document.getElementById(`qo${id}`).innerHTML='';
+    document.getElementById(`qf${id}`).className='fb';
+    document.getElementById(`nb${id}`).style.display='none';
+    const sc=document.getElementById(`sc${id}`);
+    sc.style.display='block';
+    const sb=document.getElementById(`sb${id}`);
+    sb.textContent=`${t.score}/${t.qs.length}`;
+    sb.style.color=t.score>=2?'var(--teal)':'var(--orange)';
+    document.getElementById(`tp${id}`).textContent='¡Completada!';
+  } else { loadTrivia(id); }
+}
+function restartTrivia(id){
+  TRIVIAS[id].cur=0; TRIVIAS[id].score=0; answered[id]=false;
+  loadTrivia(id);
+}
+
+/* ── INIT ── */
+window.addEventListener('load',()=>{
+  loadTrivia(13);
+  newChallenge();
+  runOLS();
+  updateMultiPred();
+});
+
+window.addEventListener('resize',()=>{ if(olsData.length) drawOLS(); if(chalData.length) drawChallenge(+document.getElementById('b0Sl').value,+document.getElementById('b1Sl').value); });
+</script>
+</body>
+</html>
